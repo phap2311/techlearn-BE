@@ -1,6 +1,5 @@
 package com.techzen.techlearn.controller;
 
-import com.techzen.techlearn.dto.request.StudentCalendarRequestDTO;
 import com.techzen.techlearn.dto.request.TeacherCalendarRequestDTO2;
 import com.techzen.techlearn.dto.response.ResponseData;
 import com.techzen.techlearn.dto.response.TeacherCalendarResponseDTO2;
@@ -24,20 +23,21 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequestMapping("/api/v1/student-calendar")
+@RequestMapping("/api/v1/student")
 public class StudentCalendarController {
 
     StudentCalendarService studentCalendarService;
     TeacherCalendar2Service teacherCalendarService;
 
-    @GetMapping("/")
+    @GetMapping("/{id}/calendar")
     public List<TeacherCalendarResponseDTO2> getSchedule(@RequestParam("StartDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-                                                         @RequestParam("EndDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+                                                         @RequestParam("EndDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+                                                         @PathVariable UUID id) {
 
-        return teacherCalendarService.findByDateRange(startDate, endDate);
+        return teacherCalendarService.findByDateRange(startDate, endDate, id);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id}/calendar/{calendarId}")
     public ResponseData<?> addStudentCalendar(@RequestBody @Valid TeacherCalendarRequestDTO2 request) throws MessagingException, IOException {
         return ResponseData.builder()
                 .status(HttpStatus.OK.value())
@@ -47,16 +47,30 @@ public class StudentCalendarController {
                 .build();
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseData<?> deleteStudentCalendar(@PathVariable UUID id){
+
+
+    @DeleteMapping("/{id}/calendar/{calendarId}")
+    public ResponseData<?> deleteStudentCalendar(@PathVariable(name = "calendarId") Integer calendarId,
+                                                 @PathVariable(name = "id") UUID id) {
         studentCalendarService.deleteStudentById(id);
         return ResponseData.builder()
                 .status(HttpStatus.OK.value())
                 .code(ErrorCode.GET_SUCCESSFUL.getCode())
                 .message(ErrorCode.GET_SUCCESSFUL.getMessage())
-                .result("StudentCalendar with ID " + id + " was successfully deleted.")
+                .result("StudentCalendar with ID " + calendarId + " was successfully deleted.")
                 .build();
     }
+
+//    @PutMapping("/{id}")
+//    public ResponseData<?> cancelStudentCalendar(@PathVariable UUID id){
+//        return ResponseData.builder()
+//                .status(HttpStatus.OK.value())
+//                .code(ErrorCode.GET_SUCCESSFUL.getCode())
+//                .message(ErrorCode.GET_SUCCESSFUL.getMessage())
+//                .result(studentCalendarService.cancelCalendarStudentById(id))
+//                .build();
+//    }
+
 
     @GetMapping("/{id}")
     public ResponseData<?> findAllCalendarStudent(@PathVariable UUID id){
