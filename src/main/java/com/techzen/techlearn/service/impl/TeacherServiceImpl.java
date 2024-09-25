@@ -3,8 +3,12 @@ package com.techzen.techlearn.service.impl;
 import com.techzen.techlearn.dto.request.TeacherRequestDTO;
 import com.techzen.techlearn.dto.response.PageResponse;
 import com.techzen.techlearn.dto.response.TeacherResponseDTO;
+import com.techzen.techlearn.entity.CourseEntity;
 import com.techzen.techlearn.entity.Teacher;
+import com.techzen.techlearn.enums.ErrorCode;
+import com.techzen.techlearn.exception.AppException;
 import com.techzen.techlearn.mapper.TeacherMapper;
+import com.techzen.techlearn.repository.CourseRepository;
 import com.techzen.techlearn.repository.TeacherRepository;
 import com.techzen.techlearn.service.TeacherService;
 import lombok.AccessLevel;
@@ -27,6 +31,7 @@ public class TeacherServiceImpl implements TeacherService {
 //    TeacherEntityRepository teacherRepository;
     TeacherRepository teacherRepository;
     TeacherMapper teacherMapper;
+    CourseRepository courseRepository;
 
     @Override
     public PageResponse<?> findAll(int page, int pageSize) {
@@ -49,6 +54,16 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
+    public List<TeacherResponseDTO> filterTeacherByCourse(Long id) {
+        List<Teacher> teachers = teacherRepository.findTeacherByCourse(id);
+        if (teachers.isEmpty()) {
+            throw new AppException(ErrorCode.TEACHER_NOT_EXISTED);
+        } else return teachers.stream()
+                .map(teacherMapper::toTeacherResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public TeacherResponseDTO addTeacher(TeacherRequestDTO request) {
         Teacher teacher = teacherMapper.toTeacherEntity(request);
 
@@ -57,5 +72,18 @@ public class TeacherServiceImpl implements TeacherService {
         }
 
         return teacherMapper.toTeacherResponseDTO(teacherRepository.save(teacher));
+    }
+
+    @Override
+    public void addTeacherToCourse(UUID teacherId, Long courseId) {
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new AppException(ErrorCode.TEACHER_NOT_EXISTED));
+
+        CourseEntity course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+
+        teacher.getCourses().add(course);
+
+        teacherRepository.save(teacher);
     }
 }

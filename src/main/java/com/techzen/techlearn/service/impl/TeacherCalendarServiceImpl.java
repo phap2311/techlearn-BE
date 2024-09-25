@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -87,33 +88,44 @@ public class TeacherCalendarServiceImpl implements TeacherCalendar2Service {
         return teacherCalendarMapper.toDTO(savedEntity);
     }
 
-
     @Override
     public List<TeacherCalendarResponseDTO2> findByDateRange(LocalDateTime startDate, LocalDateTime endDate, UUID id) {
         Teacher teacher;
         Mentor mentor;
         UserEntity user;
         List<TeacherCalendar> entities = null;
+        List<CalendarStatus> statuses = Arrays.asList(CalendarStatus.BUSY, CalendarStatus.BOOKED);
 
         if(isTeacher(id)) {
             teacher = teacherRepository.findById(id)
                     .orElseThrow(() -> new AppException(ErrorCode.TEACHER_NOT_EXISTED));
-            entities = teacherCalendarRepository.findByStartTimeGreaterThanEqualAndEndTimeLessThanEqualAndTeacher(startDate, endDate, teacher);
+            entities = teacherCalendarRepository.findByStartTimeGreaterThanEqualAndEndTimeLessThanEqualAndTeacherAndStatusIn(startDate, endDate, teacher, statuses);
 
         } else if (isMentor(id)) {
             mentor = mentorRepository.findById(id)
                     .orElseThrow(() -> new AppException(ErrorCode.MENTOR_NOT_EXISTED));
-            entities = teacherCalendarRepository.findByStartTimeGreaterThanEqualAndEndTimeLessThanEqualAndMentor(startDate, endDate, mentor);
+            entities = teacherCalendarRepository.findByStartTimeGreaterThanEqualAndEndTimeLessThanEqualAndMentorAndStatusIn(startDate, endDate, mentor, statuses);
         } else {
             user = userRepository.findById(id)
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-            entities = teacherCalendarRepository.findByStartTimeGreaterThanEqualAndEndTimeLessThanEqualAndUser(startDate, endDate, user);
+            entities = teacherCalendarRepository.findByStartTimeGreaterThanEqualAndEndTimeLessThanEqualAndUserAndStatusAndStatusIn(startDate, endDate, user, CalendarStatus.BOOKED, statuses);
         }
 
         return entities.stream()
                 .map(teacherCalendarMapper::toDTO)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<TeacherCalendarResponseDTO2> findByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        List<CalendarStatus> statuses = Arrays.asList(CalendarStatus.BUSY, CalendarStatus.BOOKED);
+        List<TeacherCalendar> calendars = teacherCalendarRepository.findByStartTimeGreaterThanEqualAndEndTimeLessThanEqualAndStatusIn(startDate, endDate, statuses);
+
+        return calendars.stream()
+                .map(teacherCalendarMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
 
     @Override
     @Transactional
@@ -125,12 +137,14 @@ public class TeacherCalendarServiceImpl implements TeacherCalendar2Service {
             calendar = teacherCalendarRepository.findByIdAndTeacher(id, teacher)
                     .orElseThrow(() -> new AppException(ErrorCode.CALENDAR_NOT_EXISTED));
 
-            teacherCalendarRepository.delete(calendar);
+            calendar.setStatus(CalendarStatus.CANCELLED);
+            teacherCalendarRepository.save(calendar);
         } else if (mentor != null) {
             calendar = teacherCalendarRepository.findByIdAndMentor(id, mentor)
                     .orElseThrow(() -> new AppException(ErrorCode.CALENDAR_NOT_EXISTED));
 
-            teacherCalendarRepository.delete(calendar);
+            calendar.setStatus(CalendarStatus.CANCELLED);
+            teacherCalendarRepository.save(calendar);
         }
     }
 
@@ -160,7 +174,9 @@ public class TeacherCalendarServiceImpl implements TeacherCalendar2Service {
         List<TeacherCalendar> calendars = teacherCalendarRepository.findByFilters(
                 uuid, technicalTeacherName, chapterName
         );
-        return calendars.stream()
+        if (calendars.isEmpty()) {
+            throw new AppException(ErrorCode.CALENDAR_NOT_EXISTED);
+        } else return calendars.stream()
                 .map(teacherCalendarMapper::toDTO)
                 .collect(Collectors.toList());
     }

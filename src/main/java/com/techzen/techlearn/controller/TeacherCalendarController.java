@@ -26,6 +26,13 @@ public class TeacherCalendarController {
 
     TeacherCalendar2Service teacherCalendarService;
 
+    @GetMapping("/calendar/")
+    public List<TeacherCalendarResponseDTO2> getSchedule(@RequestParam("StartDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+                                                         @RequestParam("EndDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+
+        return teacherCalendarService.findByDateRange(startDate, endDate);
+    }
+
     @PostMapping("/{id}/calendar")
     @PreAuthorize("hasAuthority('TEACHER') or hasAuthority('MENTOR')")
     public ResponseData<?> addTeacherCalendar(@RequestBody @Valid TeacherCalendarRequestDTO2 request, @PathVariable(name = "id") UUID id) {
@@ -38,7 +45,7 @@ public class TeacherCalendarController {
     }
 
     @PutMapping("/{id}/calendar/{calendarId}")
-    @PreAuthorize("hasAuthority('TEACHER')")
+    @PreAuthorize("hasAuthority('TEACHER') or hasAuthority('MENTOR')")
     public ResponseData<?> updateTeacherCalendar(@PathVariable(name = "calendarId") Integer calendarId,
                                                  @RequestBody @Valid TeacherCalendarRequestDTO2 request) {
         return ResponseData.builder()
@@ -50,7 +57,7 @@ public class TeacherCalendarController {
     }
 
     @GetMapping("/{id}/calendar/")
-    @PreAuthorize("hasAuthority('TEACHER')")
+//    @PreAuthorize("hasAuthority('TEACHER') or hasAuthority('MENTOR')")
     public List<TeacherCalendarResponseDTO2> getSchedule(@RequestParam("StartDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
                                                          @RequestParam("EndDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
                                                          @PathVariable UUID id) {
@@ -59,7 +66,7 @@ public class TeacherCalendarController {
     }
 
     @DeleteMapping("/{id}/calendar/{calendarId}")
-    @PreAuthorize("hasAuthority('TEACHER')")
+    @PreAuthorize("hasAuthority('TEACHER') or hasAuthority('MENTOR')")
     public ResponseData<?> deleteTeacherCalendar(@PathVariable(name = "calendarId") Integer calendarId,
                                                  @PathVariable(name = "id") UUID ownerId) {
         teacherCalendarService.deleteTeacherCalendar(calendarId, ownerId);

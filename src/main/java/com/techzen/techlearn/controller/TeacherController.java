@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -48,6 +49,27 @@ public class TeacherController {
                 .code(ErrorCode.ADD_SUCCESSFUL.getCode())
                 .message(ErrorCode.ADD_SUCCESSFUL.getMessage())
                 .result(teacherService.addTeacher(request))
+                .build();
+    }
+
+    @GetMapping("/course/{id}")
+    public ResponseData<?> filterTeacherByCourse(@PathVariable Long id) {
+        return ResponseData.builder()
+                .status(HttpStatus.OK.value())
+                .code(ErrorCode.GET_SUCCESSFUL.getCode())
+                .message(ErrorCode.GET_SUCCESSFUL.getMessage())
+                .result(teacherService.filterTeacherByCourse(id))
+                .build();
+    }
+
+    @PostMapping("/{teacherId}/courses/{courseId}")
+//    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseData<?> addTeacherToCourse(@PathVariable UUID teacherId, @PathVariable Long courseId) {
+        teacherService.addTeacherToCourse(teacherId, courseId);
+        return ResponseData.builder()
+                .status(HttpStatus.OK.value())
+                .code(ErrorCode.ADD_SUCCESSFUL.getCode())
+                .message("Teacher added to course successfully.")
                 .build();
     }
 }
