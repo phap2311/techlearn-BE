@@ -3,6 +3,7 @@ package com.techzen.techlearn.controller;
 import com.techzen.techlearn.dto.request.TeacherCalendarRequestDTO2;
 import com.techzen.techlearn.dto.response.ResponseData;
 import com.techzen.techlearn.dto.response.TeacherCalendarResponseDTO2;
+import com.techzen.techlearn.entity.TeacherCalendar;
 import com.techzen.techlearn.enums.ErrorCode;
 import com.techzen.techlearn.service.TeacherCalendar2Service;
 import jakarta.validation.Valid;
@@ -34,7 +35,7 @@ public class TeacherCalendarController {
     }
 
     @PostMapping("/{id}/calendar")
-    @PreAuthorize("hasAuthority('TEACHER') or hasAuthority('MENTOR')")
+    @PreAuthorize("hasAuthority('TEACHER')")
     public ResponseData<?> addTeacherCalendar(@RequestBody @Valid TeacherCalendarRequestDTO2 request, @PathVariable(name = "id") UUID id) {
         return ResponseData.builder()
                 .status(HttpStatus.OK.value())
@@ -57,7 +58,6 @@ public class TeacherCalendarController {
     }
 
     @GetMapping("/{id}/calendar/")
-//    @PreAuthorize("hasAuthority('TEACHER') or hasAuthority('MENTOR')")
     public List<TeacherCalendarResponseDTO2> getSchedule(@RequestParam("StartDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
                                                          @RequestParam("EndDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
                                                          @PathVariable UUID id) {
@@ -94,4 +94,13 @@ public class TeacherCalendarController {
                 .build();
     }
 
+    @GetMapping("/calendar/{idCourse}/chapter/{idChapter}/")
+    public List<TeacherCalendarResponseDTO2> getCourseChapterTeacherMentor(
+            @PathVariable Long idCourse,
+            @PathVariable Long idChapter,
+            @RequestParam("StartDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam("EndDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+
+        return teacherCalendarService.findCourseChapterTeacherMentor(idCourse, idChapter, startDate, endDate);
+    }
 }

@@ -14,7 +14,9 @@ import com.techzen.techlearn.repository.MentorRepository;
 import com.techzen.techlearn.repository.TeacherCalendarRepository;
 import com.techzen.techlearn.repository.TeacherRepository;
 import com.techzen.techlearn.repository.UserRepository;
+import com.techzen.techlearn.service.MailService;
 import com.techzen.techlearn.service.TeacherCalendar2Service;
+import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -24,10 +26,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,6 +39,7 @@ public class TeacherCalendarServiceImpl implements TeacherCalendar2Service {
     TeacherRepository teacherRepository;
     UserRepository userRepository;
     MentorRepository mentorRepository;
+    MailService mailService;
 
     private boolean isTeacher(UUID id) {
         return teacherRepository.existsById(id);
@@ -132,7 +132,7 @@ public class TeacherCalendarServiceImpl implements TeacherCalendar2Service {
     public void deleteTeacherCalendar(Integer id, UUID ownerId) {
         Teacher teacher = teacherRepository.findById(ownerId).orElse(null);
         Mentor mentor = mentorRepository.findById(ownerId).orElse(null);
-        TeacherCalendar calendar;
+        TeacherCalendar calendar = null;
         if (teacher != null) {
             calendar = teacherCalendarRepository.findByIdAndTeacher(id, teacher)
                     .orElseThrow(() -> new AppException(ErrorCode.CALENDAR_NOT_EXISTED));
@@ -145,6 +145,26 @@ public class TeacherCalendarServiceImpl implements TeacherCalendar2Service {
 
             calendar.setStatus(CalendarStatus.CANCELLED);
             teacherCalendarRepository.save(calendar);
+        }
+
+        UserEntity user = calendar.getUser();
+        user.setPoints(user.getPoints() + 1);
+        userRepository.save(user);
+
+        try {
+            mailService.sendEmails(
+                    new ArrayList<>(Collections.singletonList(user.getEmail())),
+                    "Lịch hẹn đã bị hủy",
+                    calendar.getTitle(),
+                    calendar.getDescription(),
+                    calendar.getStartTime(),
+                    calendar.getEndTime(),
+                    calendar.getDescription(),
+                    "Chi tiết",
+                    "#e74c3c"  // Màu đỏ
+            );
+        } catch (MessagingException e) {
+            throw new AppException(ErrorCode.CANNOT_SEND_EMAIL);
         }
     }
 
@@ -181,4 +201,56 @@ public class TeacherCalendarServiceImpl implements TeacherCalendar2Service {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<TeacherCalendarResponseDTO2> findCourseChapterTeacherMentor(Long idCourse, Long idChapter, LocalDateTime startDate, LocalDateTime endDate) {
+//        return teacherCalendarRepository.findCourseChapterTeacherMentor(idCourse, idChapter, startDate, endDate)
+//                .stream().map(teacherCalendarMapper::toDTO)
+//                .collect(Collectors.toList());
+
+        List<TeacherCalendarResponseDTO2> fakeData = new ArrayList<>();
+
+        // Đối tượng giả đầu tiên
+        TeacherCalendarResponseDTO2 dto1 = TeacherCalendarResponseDTO2.builder()
+                .id(UUID.randomUUID().toString())
+                .title("Lập trình Java")
+                .startTime("2024-10-01T10:00:00")
+                .endTime("2024-10-01T11:00:00")
+                .isAllDay(false)
+                .guid(UUID.randomUUID().toString())
+                .description("Buổi học lập trình Java cơ bản.")
+                .startTimezone("Asia/Ho_Chi_Minh")
+                .endTimezone("Asia/Ho_Chi_Minh")
+                .ownerId("6929751b-7a4a-11ef-8bc5-005056c00001")
+                .recurrenceException(null)
+                .recurrenceID(null)
+                .recurrenceRule(null)
+                .status(CalendarStatus.BUSY)
+                .userId("6a1b4eba-fbc6-412b-8219-2a1f84eba567")
+                .build();
+
+        // Đối tượng giả thứ hai
+        TeacherCalendarResponseDTO2 dto2 = TeacherCalendarResponseDTO2.builder()
+                .id(UUID.randomUUID().toString())
+                .title("Thiết kế cơ sở dữ liệu")
+                .startTime("2024-10-02T14:00:00")
+                .endTime("2024-10-02T16:00:00")
+                .isAllDay(false)
+                .guid(UUID.randomUUID().toString())
+                .description("Buổi học về thiết kế cơ sở dữ liệu.")
+                .startTimezone("Asia/Ho_Chi_Minh")
+                .endTimezone("Asia/Ho_Chi_Minh")
+                .ownerId("6929751b-7a4a-11ef-8bc5-005056c00001")
+                .recurrenceException(null)
+                .recurrenceID(null)
+                .recurrenceRule(null)
+                .status(CalendarStatus.BOOKED)
+                .userId("6a1b4eba-fbc6-412b-8219-2a1f84eba567")
+                .build();
+
+        // Thêm vào danh sách
+        fakeData.add(dto1);
+        fakeData.add(dto2);
+
+        return fakeData;
+    }
 }

@@ -90,14 +90,23 @@ public class UserController {
     }
 
     @PostMapping("/{id}/add-roles")
-    public ResponseData<?> addRole(@PathVariable UUID id, @RequestBody RoleRequest roleRequest) {
+    public ResponseData<?> addRoles(@PathVariable UUID id, @RequestBody RoleRequest roleRequest) {
         return ResponseData.builder()
                 .status(HttpStatus.OK.value())
                 .result(userService.addRole(id, roleRequest.getRoles()))
                 .build();
     }
 
+    @PostMapping("/{id}/remove-roles")
+    public ResponseData<?> removeRoles(@PathVariable UUID id, @RequestBody RoleRequest roleRequest) {
+        return ResponseData.builder()
+                .status(HttpStatus.OK.value())
+                .result(userService.removeRoles(id, roleRequest.getRoles()))
+                .build();
+    }
+
     @GetMapping("/me")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('TEACHER') or hasAuthority('USER') or hasAuthority('MENTOR')")
     public ResponseData<?> retrieveUser() {
         return ResponseData.builder()
                 .status(HttpStatus.OK.value())
