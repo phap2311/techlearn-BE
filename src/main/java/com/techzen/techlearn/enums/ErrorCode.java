@@ -63,6 +63,7 @@ public enum ErrorCode {
     DATE_APPOINTMENT_NOT_SUITABLE(1019, "This smaller set date is now", HttpStatus.BAD_REQUEST),
     TIME_START_SUITABLE(1020, "This smaller set time is now", HttpStatus.BAD_REQUEST),
     CALENDAR_NOT_EXISTED(1021, "Calendar not existed", HttpStatus.NOT_FOUND),
+    CALENDAR_CAN_NOT_DELETE(1022,"The meeting is about to start and cannot be canceled",HttpStatus.BAD_REQUEST),
 
     //error code chapter
     CHAPTER_NOT_EXISTED(1898, "Chapter not existed", HttpStatus.NOT_FOUND),
@@ -73,7 +74,10 @@ public enum ErrorCode {
     // error code StructResponseAI : 170*
     STRUCT_RESPONSE_NOT_EXISTED(1701, "StructResponseAI not found", HttpStatus.NOT_FOUND),
     TYPE_STRUCT_RESPONSE_NOT_EXISTED(1702, "Type StructResponseAI not found", HttpStatus.NOT_FOUND),
-    CONTENT_STRUCT_RESPONSE_NOT_NULL(1703, "Type StructResponseAI not found", HttpStatus.NOT_FOUND);
+    CONTENT_STRUCT_RESPONSE_NOT_NULL(1703, "Type StructResponseAI not found", HttpStatus.NOT_FOUND),
+
+    // error code Student course : 180*
+    Student_course_exist(1801,"Exist Student course " ,HttpStatus.BAD_REQUEST);
 
     Integer code;
     String message;
